@@ -18,7 +18,7 @@ def populateList():
 			list.append((s,r.json()))
 	return list
 
-# Sets Nginx to proxy to the flannel IP with the highest available storage.
+# Sets Nginx to proxy to the flannel IP of the kube node with the highest available storage.
 def setIP():
 	list = populateList()
 	highestCapacity = 0
