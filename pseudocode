@@ -1,0 +1,40 @@
+Entities:
+  node
+  storageHelper
+  node.downloadShare
+  client
+  client.downloadShare
+  client.downloadShare.set
+  client.idle
+  node.mostStorage
+  client.target
+    
+StartLoop():
+  sleep Unspecified
+  
+  if client.idle:
+    return
+
+  from storageHelper:
+    return node.mostStorage
+  
+  client.target = node.mostStorage
+  
+  client.downloadShare.set():
+    client.downloadShare = node.mostStorage.downloadShare
+  
+  return
+  
+Definitions:
+  node;
+  
+  storageHelper = http-available-storage; DaemonSet
+  node.downloadShare = NFS server; Daemonset
+  
+  client = Radarr or Sonarr; 2 Pods
+  client.downloadShare = NFS client; 2 Pods
+  
+  client.idle = Radarr or Sonarr API; Controller, depends upon client
+  node.mostStorage; Controller, depends upon storageHelper
+  client.target; Controller, depends upon client
+  client.downloadShare.set; Controller, depends upon client.downloadShare && depends upon node.downloadShare
