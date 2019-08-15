@@ -20,8 +20,8 @@ STORAGE_LABELS = os.environ["STORAGE_LABELS"]
 STORAGE_PORT = os.environ["STORAGE_PORT"]
 ENDPOINTS_TARGET_LABELS = os.environ["ENDPOINTS_TARGET_LABELS"]
 ENDPOINTS_NAME = os.environ["ENDPOINTS_NAME"]
-NFS_TARGET_LABELS = os.environ["NFS_TARGET_LABELS"]
-NFS_NAME = os.environ["NFS_NAME"]
+NFSSERVER_TARGET_LABELS = os.environ["NFSSERVER_TARGET_LABELS"]
+NFSCLIENT_NAME = os.environ["NFSCLIENT_NAME"]
 ARR_NAME = os.environ["ARR_NAME"]
 ARR_PORT = os.environ["ARR_PORT"]
 
@@ -80,7 +80,7 @@ def patchEndpoint(podIP):
 		print("Exception when calling CoreV1Api->patch_namespaced_endpoints: %s\n" % e)
 		sys.exit(1)
 
-# in: NAMESPACE, NFS_NAME, podIP
+# in: NAMESPACE, NFSCLIENT_NAME, podIP
 # out:
 def patchNFS(podIP):
 	patchSubset = client.V1PodSpec({"env": {"SERVER": podIP}})
@@ -88,20 +88,19 @@ def patchNFS(podIP):
 	patchSubset3 = client.V1DeploymentSpec(patchSubset2)
 	patch = client.V1Deployment(patchSubset3)
 	try:
-		ApiResponse = v1.patch_namespaced_deployment(NFS_NAME, NAMESPACE, patch)
+		ApiResponse = v1.patch_namespaced_deployment(NFSCLIENT_NAME, NAMESPACE, patch)
 		print("Deployment patched. Status: %s\n" % str(ApiResponse.status))
 	except ApiException as e:
 		print("Exception when calling CoreV1Api->patch_namespaced_deployment: %s\n" % e)
 		sys.exit(1)
 
-# in: ENDPOINTS_TARGET_LABELS, NFS_TARGET_LABELS
+# in: ENDPOINTS_TARGET_LABELS, NFSSERVER_TARGET_LABELS
 def main():
 	nodeIP = getNodeWithMostStorage()
 	endpointIP = getEndpoint(nodeIP, ENDPOINTS_TARGET_LABELS)
-	nfsIP = getDestination(nodeIP, NFS_TARGET_LABELS)
-	if arr == gucci:
-		patchEndpoint(endpointIP)
-		patchNFS(nfsIP)
+	nfsIP = getDestination(nodeIP, NFSSERVER_TARGET_LABELS)
+	patchEndpoint(endpointIP)
+	patchNFS(nfsIP)
 
 if __name__ == '__main__':
 	main()
