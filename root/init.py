@@ -1,37 +1,53 @@
 #!/usr/bin/env python3
-import requests
+# Documentation:
+#   https://2.python-requests.org/en/master/
+#   https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/CoreV1Api.md#patch_namespaced_endpoints
+#   https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/CoreV1Api.md#list_namespaced_pod
+#   https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/CoreV1Api.md#patch_namespaced_pod
+#   https://github.com/kubernetes-client/python/blob/master/examples/in_cluster_config.py
+#   https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/V1PodStatus.md
+import sys
 import os
-import subprocess
-from kubernetes import client, config
+import requests
+import kubernetes.client
+from kubernetes.client.rest import ApiException
+from kubernetes import config
 
-# Returns a 2D list containing Flannel IPs [i] of all worker nodes as well as the available storage [j] for the nodes.
-def populateList():
-	# 2D list
-	list = [[]]
-	config.load_incluster_config()
-	v1 = client.CoreV1Api()
-	ret = v1.list_pod_for_all_namespaces(watch=False)
-	# Parse through all kube pods.
-	for i in ret.items:
-		# We are only interested in the http-available-storage pods.
-		if "http-available-storage" in i.metadata.name:
-			# This returns the available storage of the node that the pod is on.
-			r = requests.get("http://" + i.status.pod_ip + ":8080")
-			# This returns the Flannel IP of the node converted from the Flannel IP of the pod.
-			s = ".".join(i.status.pod_ip.split(".")[:3]) + "0"
-			# Add the Flannel IP of the node followed by the available storage of the node in KiB.
-			list.append((s,r.json()))
-	return list
+config.load_incluster_config()
+v1 = client.CoreV1Api()
+NAMESPACE = os.environ["NAMESPACE"]
+STORAGE_PORT = os.environ["STORAGE_PORT"]
+DESTINATION_PORT = os.environ["DESTINATION_PORT"]
+STORAGE_LABELS = os.environ["STORAGE_LABELS"]
+DESTINATION_LABELS = os.environ["DESINATION_LABELS"]
 
-# Sets Nginx to proxy to the flannel IP of the kube node with the highest available storage.
-def setIP():
-	list = populateList()
-	highestCapacity = 0
-	n = 0
-	for i in list:
-		if list[i][1] > highestCapacity:
-			highestCapacity = list[i][1]
-			n = i
-	# Set the "IP" environment variable to the Flannel IP of the node with the highest available storage.
-	os.environ["IP"] = list[n][0]
-	subprocess.call("/nginx.sh")
+def getNodeWithMostStorage():
+	podIP, hostIP = ""
+	curMax = 0
+	try:
+		podList = v1.list_namespaced_pod(NAMESPACE, label_selector=STORAGE_LABELS, watch=False)
+	except ApiException as e:
+		print("Exception when calling CoreV1Api->list_namespaced_pod: %s\n" % e)
+		sys.exit(1)
+	for i in podList.items:
+		try:
+			r = requests.get("http://" + i.status.pod_ip + ":" + STORAGE_PORT)
+		except requests.exceptions.RequestException as e:
+			print("Exception when calling requests->get: %s\n" % e)
+			sys.exit(1)
+		if r.json() > i:
+			podIP = i.status.pod_ip
+			hostIP = i.status.host_ip
+			n = r.json()
+	if podIP == "":
+		print("ScriptError: IP invalid in getNodeWithMostStorage()\n")
+		sys.exit(1)
+	return podIP, hostIP
+
+def 
+
+def main():
+	podIP, hostIP = getNodeWithMostStorage()
+	
+if __name__ == '__main__':
+	main()
