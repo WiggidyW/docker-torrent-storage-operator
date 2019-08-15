@@ -9,17 +9,22 @@
 import sys
 import os
 import requests
+from kubernetes import client, config
 import kubernetes.client
 from kubernetes.client.rest import ApiException
-from kubernetes import config
 
 config.load_incluster_config()
 v1 = client.CoreV1Api()
 NAMESPACE = os.environ["NAMESPACE"]
-STORAGE_PORT = os.environ["STORAGE_PORT"]
-DESTINATION_PORT = os.environ["DESTINATION_PORT"]
 STORAGE_LABELS = os.environ["STORAGE_LABELS"]
-DESTINATION_LABELS = os.environ["DESINATION_LABELS"]
+STORAGE_PORT = os.environ["STORAGE_PORT"]taken
+SONARR_NAME = os.environ["SONARR_NAME"]
+SONARR_PORT = os.environ["SONARR_PORT"]
+RADARR_NAME = os.environ["RADARR_NAME"]
+RADARR_PORT = os.environ["RADARR_PORT"]
+ENDPOINTS_NAME = os.environ["ENDPOINTS_NAME"]
+ENDPOINTS_PORT = os.environ["ENDPOINTS_PORT"]
+POD_LABELS = os.environ["POD_LABELS"]
 
 def getNodeWithMostStorage():
 	podIP, hostIP = ""
@@ -35,19 +40,23 @@ def getNodeWithMostStorage():
 		except requests.exceptions.RequestException as e:
 			print("Exception when calling requests->get: %s\n" % e)
 			sys.exit(1)
-		if r.json() > i:
+		if r.json() > curMax:
 			podIP = i.status.pod_ip
 			hostIP = i.status.host_ip
-			n = r.json()
+			curMax = r.json()
 	if podIP == "":
 		print("ScriptError: IP invalid in getNodeWithMostStorage()\n")
 		sys.exit(1)
 	return podIP, hostIP
 
-def 
+def patchEndpoints(podIP):
+	patch = client.V1EndpointSubset(
+	try:
+		v1.patch_namespaced_endpoints(ENDPOINTS_NAME, NAMESPACE, 
 
 def main():
 	podIP, hostIP = getNodeWithMostStorage()
+	patchService(podIP)
 	
 if __name__ == '__main__':
 	main()
