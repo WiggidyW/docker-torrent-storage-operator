@@ -9,7 +9,6 @@
 import sys
 import os
 import requests
-import subprocess
 from kubernetes import client, config
 import kubernetes.client
 from kubernetes.client.rest import ApiException
@@ -19,46 +18,90 @@ v1 = client.CoreV1Api()
 NAMESPACE = os.environ["NAMESPACE"]
 STORAGE_LABELS = os.environ["STORAGE_LABELS"]
 STORAGE_PORT = os.environ["STORAGE_PORT"]
+ENDPOINTS_TARGET_LABELS = os.environ["ENDPOINTS_TARGET_LABELS"]
 ENDPOINTS_NAME = os.environ["ENDPOINTS_NAME"]
-ENDPOINTS_PORT = os.environ["ENDPOINTS_PORT"]
-POD_NAME = os.environ["POD_NAME"]
-SONARR_NAME = os.environ["SONARR_NAME"]
-SONARR_PORT = os.environ["SONARR_PORT"]
-RADARR_NAME = os.environ["RADARR_NAME"]
-RADARR_PORT = os.environ["RADARR_PORT"]
+NFS_TARGET_LABELS = os.environ["NFS_TARGET_LABELS"]
+NFS_NAME = os.environ["NFS_NAME"]
+ARR_NAME = os.environ["ARR_NAME"]
+ARR_PORT = os.environ["ARR_PORT"]
 
+# in: NAMESPACE, STORAGE_LABELS, STORAGE_PORT
+# out: nodeIP
 def getNodeWithMostStorage():
-	podIP, hostIP = ""
+	podIP, nodeIP = ""
 	curMax = 0
 	try:
 		podList = v1.list_namespaced_pod(NAMESPACE, label_selector=STORAGE_LABELS, watch=False)
 	except ApiException as e:
 		print("Exception when calling CoreV1Api->list_namespaced_pod: %s\n" % e)
 		sys.exit(1)
-	for i in podList.items:
-		try:
-			r = requests.get("http://" + i.status.pod_ip + ":" + STORAGE_PORT)
-		except requests.exceptions.RequestException as e:
-			print("Exception when calling requests->get: %s\n" % e)
-			sys.exit(1)
-		if r.json() > curMax:
-			podIP = i.status.pod_ip
-			hostIP = i.status.host_ip
-			curMax = r.json()
-	if podIP == "":
+	else:
+		for i in podList.items:
+			try:
+				r = requests.get("http://" + i.status.pod_ip + ":" + STORAGE_PORT)
+			except requests.exceptions.RequestException as e:
+				print("Exception when calling requests->get: %s\n" % e)
+				sys.exit(1)
+			else:
+				if r.json() > curMax:
+					nodeIP = i.status.host_ip
+					curMax = r.json()
+	if nodeIP == "":
 		print("ScriptError: IP invalid in getNodeWithMostStorage()\n")
 		sys.exit(1)
-	return podIP, hostIP
+	return nodeIP
 
-def patchEndpoints(podIP):
-	patch = client.V1EndpointSubset(
-		addresses=["
+# in: NAMESPACE, labels, nodeIP
+# out: podIP
+def getDestination(nodeIP, labels):
+	podIP = ""
 	try:
-		v1.patch_namespaced_endpoints(ENDPOINTS_NAME, NAMESPACE, 
+		podList = v1.list_namespaced_pod(NAMESPACE, label_selector=labels, watch=False)
+	except ApiException as e:
+		print("Exception when calling CoreV1Api->list_namespaced_pod: %s\n" % e)
+		sys.exit(1)
+	else:
+		for i in podList.items:
+			if i.status.host_ip == nodeIP:
+				podIP = i.status.pod_ip
+	if podIP == "";
+		print("ScriptError: IP invalid in getDestination(nodeIP, labels)\n")
+		sys.exit(1)
+	return podIP
 
+# in: NAMESPACE, ENDPOINTS_NAME, podIP
+# out:
+def patchEndpoint(podIP):
+	patch = client.V1Endpoints({"addresses": {"ip": podIP}})
+	try:
+		ApiResponse = v1.patch_namespaced_endpoints(ENDPOINTS_NAME, NAMESPACE, patch)
+		print("Endpoints patched. Status: %s\n" % str(ApiResponse.status))
+	except ApiException as e:
+		print("Exception when calling CoreV1Api->patch_namespaced_endpoints: %s\n" % e)
+		sys.exit(1)
+
+# in: NAMESPACE, NFS_NAME, podIP
+# out:
+def patchNFS(podIP):
+	patchSubset = client.V1PodSpec({"env": {"SERVER": podIP}})
+	patchSubset2 = client.V1PodTemplateSpec(patchSubset)
+	patchSubset3 = client.V1DeploymentSpec(patchSubset2)
+	patch = client.V1Deployment(patchSubset3)
+	try:
+		ApiResponse = v1.patch_namespaced_deployment(NFS_NAME, NAMESPACE, patch)
+		print("Deployment patched. Status: %s\n" % str(ApiResponse.status))
+	except ApiException as e:
+		print("Exception when calling CoreV1Api->patch_namespaced_deployment: %s\n" % e)
+		sys.exit(1)
+
+# in: ENDPOINTS_TARGET_LABELS, NFS_TARGET_LABELS
 def main():
-	podIP, hostIP = getNodeWithMostStorage()
-	patchService(podIP)
-	
+	nodeIP = getNodeWithMostStorage()
+	endpointIP = getEndpoint(nodeIP, ENDPOINTS_TARGET_LABELS)
+	nfsIP = getDestination(nodeIP, NFS_TARGET_LABELS)
+	if arr == gucci:
+		patchEndpoint(endpointIP)
+		patchNFS(nfsIP)
+
 if __name__ == '__main__':
 	main()
