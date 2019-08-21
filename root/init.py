@@ -22,9 +22,6 @@ LABELS = os.environ["LABELS"]
 MESSENGER_PORT = os.environ["MESSENGER_PORT"]
 NAMESPACE = os.environ["NAMESPACE"]
 
-SSH_PORT = os.environ["SSH_PORT"]
-KEY = os.environ["KEY"]
-
 def getNodeWithMostStorage():
 	IP = ""
 	curMax = 0
