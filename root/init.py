@@ -18,9 +18,9 @@ from kubernetes.client.rest import ApiException
 config.load_incluster_config()
 v1 = client.CoreV1Api()
 # STORAGE_LABELS Must be labels unique to the storage pods
-STORAGE_LABELS = os.environ["LABELS"]
-STORAGE_MESSENGER_PORT = os.environ["MESSENGER_PORT"]
-STORAGE_NAMESPACE = os.environ["NAMESPACE"]
+STORAGE_LABELS = os.environ["STORAGE_LABELS"]
+STORAGE_MESSENGER_PORT = os.environ["STORAGE_MESSENGER_PORT"]
+STORAGE_NAMESPACE = os.environ["STORAGE_NAMESPACE"]
 
 def getNodeWithMostStorage():
 	IP = ""
