@@ -6,6 +6,7 @@
 #   https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/CoreV1Api.md#patch_namespaced_pod
 #   https://github.com/kubernetes-client/python/blob/master/examples/in_cluster_config.py
 #   https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/V1PodStatus.md
+import time
 import sys
 import os
 import subprocess
@@ -48,7 +49,8 @@ def getNodeWithMostStorage():
 		sys.exit(1)
 	return IP
 
-if __name__ == '__main__':
+while True:
 	IP = getNodeWithMostStorage()
 	os.environ["IP"] = IP
 	subprocess.call("/scp.sh")
+	time.sleep(3600)
