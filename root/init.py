@@ -12,7 +12,6 @@ import os
 import subprocess
 import requests
 from kubernetes import client, config
-import kubernetes.client
 from kubernetes.client.rest import ApiException
 
 config.load_incluster_config()
