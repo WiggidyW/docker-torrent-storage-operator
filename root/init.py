@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-# Documentation:
-#   https://2.python-requests.org/en/master/
-#   https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/CoreV1Api.md#patch_namespaced_endpoints
-#   https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/CoreV1Api.md#list_namespaced_pod
-#   https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/CoreV1Api.md#patch_namespaced_pod
-#   https://github.com/kubernetes-client/python/blob/master/examples/in_cluster_config.py
-#   https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/V1PodStatus.md
 import time
 import sys
 import os
