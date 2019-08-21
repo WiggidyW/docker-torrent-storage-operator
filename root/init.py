@@ -18,22 +18,22 @@ from kubernetes.client.rest import ApiException
 config.load_incluster_config()
 v1 = client.CoreV1Api()
 # STORAGE_LABELS Must be labels unique to the storage pods
-LABELS = os.environ["LABELS"]
-MESSENGER_PORT = os.environ["MESSENGER_PORT"]
-NAMESPACE = os.environ["NAMESPACE"]
+STORAGE_LABELS = os.environ["LABELS"]
+STORAGE_MESSENGER_PORT = os.environ["MESSENGER_PORT"]
+STORAGE_NAMESPACE = os.environ["NAMESPACE"]
 
 def getNodeWithMostStorage():
 	IP = ""
 	curMax = 0
 	try:
-		podList = v1.list_namespaced_pod(NAMESPACE, label_selector=LABELS, watch=False)
+		podList = v1.list_namespaced_pod(STORAGE_NAMESPACE, label_selector=STORAGE_LABELS, watch=False)
 	except ApiException as e:
 		print("Exception when calling CoreV1Api->list_namespaced_pod: %s\n" % e)
 		sys.exit(1)
 	else:
 		for i in podList.items:
 			try:
-				r = requests.get("http://" + i.status.pod_ip + ":" + MESSENGER_PORT)
+				r = requests.get("http://" + i.status.pod_ip + ":" + STORAGE_MESSENGER_PORT)
 			except requests.exceptions.RequestException as e:
 				print("Exception when calling requests->get: %s\n" % e)
 				sys.exit(1)
