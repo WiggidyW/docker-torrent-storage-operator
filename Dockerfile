@@ -16,8 +16,8 @@ ENV IP
 RUN apk add --no-cache \
     openssh-client \
     rsync \
-    python \
- && pip install --no-cache-dir \
+    python3 \
+ && pip3 install --no-cache-dir \
     requests \
     kubernetes \
  && mkdir /downloads \
