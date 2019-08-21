@@ -48,6 +48,5 @@ def getNodeWithMostStorage():
 
 while True:
 	IP = getNodeWithMostStorage()
-	os.environ["IP"] = IP
-	subprocess.call("/scp.sh")
+	subprocess.call(["/rsync.sh", IP])
 	time.sleep(3600)
