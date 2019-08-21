@@ -19,7 +19,6 @@ RUN apk add --no-cache \
  && pip3 install --no-cache-dir \
     requests \
     kubernetes \
- && apk del --no-cache --purge pip3 \
  && mkdir /downloads \
  && mkdir /torrents \
  && mkdir /keys
