@@ -10,7 +10,8 @@ ARG SSH_KEY
 ENV STORAGE_DOWNLOADS_PATH=/downloads \
     STORAGE_TORRENTS_PATH=/torrents \
     STORAGE_NAMESPACE=default \
-    STORAGE_SSH_PORT=22
+    STORAGE_SSH_PORT=22 \
+    LOCK_FILE=lock
 
 RUN apk add --no-cache \
     openssh-client \
